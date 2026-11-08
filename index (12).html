@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pakistan Weather Live</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f3f5f1; --surface:#fbfcfa; --fg:#18231f; --muted:#5d6b65; --line:#d9dfd9;
+  --accent:#0b6b4f; --accent-soft:#dcebe3; --warm:#c8631b; --cool:#2f6f9f; --rain:#2f6f9f;
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1714; --surface:#16211d; --fg:#e6ede9; --muted:#9aaba3; --line:#2a3a34;
+  --accent:#4fc59a; --accent-soft:#1d3a30; --warm:#f09a58; --cool:#78b4e0; --rain:#78b4e0; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding:24px 16px 40px}
+.wrap{max-width:1040px;margin:0 auto}
+header{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:end;justify-content:space-between;margin-bottom:16px}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(28px,5vw,40px);line-height:1.05;margin:0;letter-spacing:-.02em}
+.date{color:var(--muted);font-size:14px;margin-top:4px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button,.btn{font:inherit;font-size:14px;padding:6px 12px;border:0;background:transparent;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--bg)}
+.btn{border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.grid{display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:760px){.grid{grid-template-columns:minmax(0,1fr)}}
+.list{display:flex;flex-direction:column;gap:2px;min-width:0}
+.region{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.region:first-child{margin-top:0}
+.city{display:flex;justify-content:space-between;align-items:baseline;gap:8px;width:100%;text-align:left;font:inherit;
+  padding:9px 12px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--fg);cursor:pointer}
+.city:hover{background:var(--surface)}
+.city[aria-pressed="true"]{background:var(--surface);border-color:var(--accent)}
+.city span:last-child{font-family:var(--font-mono);font-size:14px;color:var(--muted)}
+@media (max-width:760px){.list{flex-direction:row;flex-wrap:wrap;gap:6px}.region{width:100%}
+  .city{width:auto;border-color:var(--line)}.city span:last-child{display:none}}
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;min-width:0}
+.detail h2{font-family:var(--font-display);font-size:clamp(24px,4vw,32px);margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:14px}
+.big{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin:16px 0 4px}
+.hi{font-family:var(--font-display);font-weight:700;font-size:clamp(56px,12vw,88px);line-height:1;color:var(--warm);letter-spacing:-.03em}
+.cond{font-family:var(--font-display);font-weight:500;font-size:clamp(20px,4vw,28px);color:var(--cool)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px;margin:20px 0;padding-block:16px;border-block:1px solid var(--line)}
+.stat dt{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.stat dd{margin:2px 0 0;font-family:var(--font-mono);font-size:18px}
+.tip{font-size:16px;max-width:62ch;margin:0}
+h3{font-family:var(--font-display);font-size:18px;margin:28px 0 4px}
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:10px;margin-top:10px}
+.day{border:1px solid var(--line);border-radius:8px;padding:10px;font-size:14px;background:var(--bg)}
+.day b{display:block;font-family:var(--font-display);font-size:15px}
+.day .t{font-family:var(--font-mono);margin-top:4px}
+.day .r{color:var(--rain);font-family:var(--font-mono);font-size:13px}
+.hstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+.hstats div{font-size:14px}
+.hstats b{display:block;font-family:var(--font-mono);font-size:16px;font-weight:500}
+svg.chart{width:100%;height:auto;display:block;margin-top:8px}
+.row{display:grid;grid-template-columns:96px minmax(0,1fr) 52px;gap:12px;align-items:center;padding:4px 0;font-size:14px}
+.row.on{font-weight:600}
+.track{position:relative;height:10px;background:var(--bg);border-radius:5px}
+.bar{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,var(--cool),var(--warm));opacity:.5}
+.row.on .bar{opacity:1}
+.row .v{font-family:var(--font-mono);font-size:13px;text-align:right}
+.msg{border:1px solid var(--line);background:var(--accent-soft);border-radius:6px;padding:12px 14px;font-size:15px}
+footer{margin-top:20px;color:var(--muted);font-size:13px;max-width:70ch}
+footer a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Pakistan Weather Live</h1>
+      <div class="date" id="date"></div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="refresh">Refresh data</button>
+      <div class="seg" role="group" aria-label="Temperature unit">
+        <button id="uC" aria-pressed="true">°C</button>
+        <button id="uF" aria-pressed="false">°F</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <nav class="list" id="list" aria-label="Cities"></nav>
+    <section class="detail" id="detail" aria-live="polite"></section>
+  </div>
+
+  <footer>Live data: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0). The forecast and the last 30 days of history are loaded from the internet, so open this page with an internet connection. Historical data usually lags by about 5 days.</footer>
+</div>
+
+<script>
+var CITIES=[
+ {n:"Lahore",r:"Punjab",lat:31.5497,lon:74.3436},
+ {n:"Faisalabad",r:"Punjab",lat:31.4504,lon:73.1350},
+ {n:"Multan",r:"Punjab",lat:30.1575,lon:71.5249},
+ {n:"Rawalpindi",r:"Punjab",lat:33.5651,lon:73.0169},
+ {n:"Islamabad",r:"Islamabad",lat:33.6844,lon:73.0479},
+ {n:"Karachi",r:"Sindh",lat:24.8607,lon:67.0011},
+ {n:"Hyderabad",r:"Sindh",lat:25.3960,lon:68.3578},
+ {n:"Peshawar",r:"Khyber Pakhtunkhwa",lat:34.0151,lon:71.5249},
+ {n:"Murree",r:"Khyber Pakhtunkhwa",lat:33.9070,lon:73.3943},
+ {n:"Quetta",r:"Balochistan",lat:30.1798,lon:66.9750},
+ {n:"Gilgit",r:"Gilgit-Baltistan",lat:35.9208,lon:74.3080},
+ {n:"Skardu",r:"Gilgit-Baltistan",lat:35.2971,lon:75.6333}
+];
+var sel="Lahore",unit="C",STATE="loading",DATA={},HIST={},HISTERR={},UPDATED="";
+
+function conv(c){return unit==="C"?c:c*9/5+32}
+function fmt(c){return Math.round(conv(c))+"°"}
+function el(t,cls,txt){var x=document.createElement(t);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x}
+function svgEl(t,attrs){var x=document.createElementNS("http://www.w3.org/2000/svg",t);for(var k in attrs)x.setAttribute(k,attrs[k]);return x}
+function cityObj(n){return CITIES.filter(function(x){return x.n===n})[0]}
+function sum(a){return a.reduce(function(s,v){return s+v},0)}
+
+function wx(code){
+  if(code===0)return "Clear sky";
+  if(code<=2)return "Partly cloudy";
+  if(code===3)return "Overcast";
+  if(code===45||code===48)return "Fog";
+  if(code>=51&&code<=57)return "Drizzle";
+  if(code>=61&&code<=67)return "Rain";
+  if(code>=71&&code<=77)return "Snow";
+  if(code>=80&&code<=82)return "Rain showers";
+  if(code===85||code===86)return "Snow showers";
+  if(code>=95)return "Thunderstorm";
+  return "Weather";
+}
+function tipFor(t,code){
+  var wet=(code>=51&&code<=67)||(code>=80&&code<=82)||code>=95;
+  var s;
+  if(t>=38)s="Extreme heat. Avoid going out in the afternoon and drink plenty of water.";
+  else if(t>=30)s="Hot weather. Wear light clothes and use a hat or sunscreen.";
+  else if(t>=22)s="Pleasant weather. Light clothing is enough.";
+  else if(t>=14)s="Cool weather. Carry a light jacket or sweater.";
+  else if(t>=5)s="Cold. Wear a warm jacket.";
+  else s="Very cold. Wear warm layers, a hat and gloves.";
+  if(wet)s+=" Rain is likely, so carry an umbrella.";
+  return s;
+}
+function dayLabel(ds){
+  try{return new Date(ds+"T00:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}catch(e){return ds}
+}
+function shortDate(ds){
+  try{return new Date(ds+"T00:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"})}catch(e){return ds}
+}
+
+function load(){
+  STATE="loading";render();
+  var lats=CITIES.map(function(c){return c.lat}).join(",");
+  var lons=CITIES.map(function(c){return c.lon}).join(",");
+  var url="https://api.open-meteo.com/v1/forecast?latitude="+lats+"&longitude="+lons+
+    "&current=temperature_2m,relative_humidity_2m,apparent_temperature,wind_speed_10m,weather_code"+
+    "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code"+
+    "&timezone=Asia%2FKarachi&forecast_days=7";
+  fetch(url).then(function(r){
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(data){
+    if(!Array.isArray(data))data=[data];
+    DATA={};
+    CITIES.forEach(function(c,i){if(data[i]&&data[i].current)DATA[c.n]=data[i]});
+    if(!Object.keys(DATA).length)throw new Error("No data");
+    UPDATED=new Date().toLocaleTimeString("en-GB",{timeZone:"Asia/Karachi",hour:"2-digit",minute:"2-digit"});
+    STATE="ok";render();loadHistory(cityObj(sel));
+  }).catch(function(){
+    STATE="error";render();
+  });
+}
+
+function loadHistory(c){
+  if(!c||HIST[c.n]||STATE!=="ok")return;
+  var end=new Date(Date.now()-5*86400000);
+  var start=new Date(end.getTime()-29*86400000);
+  var url="https://archive-api.open-meteo.com/v1/archive?latitude="+c.lat+"&longitude="+c.lon+
+    "&start_date="+start.toISOString().slice(0,10)+"&end_date="+end.toISOString().slice(0,10)+
+    "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FKarachi";
+  delete HISTERR[c.n];
+  fetch(url).then(function(r){
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    return r.json();
+  }).then(function(h){
+    if(!h.daily||!h.daily.time)throw new Error("No data");
+    HIST[c.n]=h.daily;renderHist();
+  }).catch(function(){
+    HISTERR[c.n]=true;renderHist();
+  });
+}
+
+function renderList(){
+  var box=document.getElementById("list");box.textContent="";
+  var last="";
+  CITIES.forEach(function(c){
+    if(c.r!==last){box.appendChild(el("div","region",c.r));last=c.r}
+    var b=el("button","city");b.setAttribute("aria-pressed",String(c.n===sel));
+    b.appendChild(el("span","",c.n));
+    var w=DATA[c.n];
+    b.appendChild(el("span","",w?fmt(w.current.temperature_2m):"..."));
+    b.onclick=function(){sel=c.n;render();loadHistory(c)};
+    box.appendChild(b);
+  });
+}
+
+function renderDetail(){
+  var d=document.getElementById("detail");d.textContent="";
+  var c=cityObj(sel);
+  d.appendChild(el("h2","",c.n));
+  d.appendChild(el("div","sub",c.r));
+  if(STATE==="loading"){d.appendChild(el("p","tip","Loading live weather..."));return}
+  var w=DATA[c.n];
+  if(STATE==="error"||!w){
+    var m=el("div","msg","Could not load weather data. Check your internet connection and try again.");
+    m.style.marginTop="16px";d.appendChild(m);return;
+  }
+  var cur=w.current,dl=w.daily;
+  var big=el("div","big");
+  big.appendChild(el("div","hi",fmt(cur.temperature_2m)));
+  big.appendChild(el("div","cond",wx(cur.weather_code)));
+  d.appendChild(big);
+  d.appendChild(el("div","sub","Current conditions · updated "+UPDATED+" (Pakistan time)"));
+
+  var s=el("dl","stats");
+  [["Feels like",fmt(cur.apparent_temperature)],
+   ["Humidity",Math.round(cur.relative_humidity_2m)+"%"],
+   ["Wind",Math.round(cur.wind_speed_10m)+" km/h"],
+   ["Elevation",Math.round(w.elevation)+" m"]].forEach(function(p){
+    var x=el("div","stat");x.appendChild(el("dt","",p[0]));x.appendChild(el("dd","",p[1]));s.appendChild(x)});
+  d.appendChild(s);
+  d.appendChild(el("p","tip",tipFor(cur.temperature_2m,cur.weather_code)));
+
+  d.appendChild(el("h3","","Next 7 days"));
+  var days=el("div","days");
+  dl.time.forEach(function(ds,i){
+    var x=el("div","day");
+    x.appendChild(el("b","",dayLabel(ds)));
+    x.appendChild(el("div","",wx(dl.weather_code[i])));
+    x.appendChild(el("div","t",fmt(dl.temperature_2m_max[i])+" / "+fmt(dl.temperature_2m_min[i])));
+    x.appendChild(el("div","r","Rain "+(dl.precipitation_sum[i]||0).toFixed(1)+" mm"));
+    days.appendChild(x);
+  });
+  d.appendChild(days);
+
+  d.appendChild(el("h3","","Last 30 days trend"));
+  var hist=el("div","");hist.id="hist";d.appendChild(hist);
+
+  d.appendChild(el("h3","","Compare cities"));
+  d.appendChild(el("div","sub","Current temperature, hottest to coolest"));
+  var sc=el("div","");sc.style.marginTop="8px";
+  CITIES.filter(function(x){return DATA[x.n]}).sort(function(a,b){
+    return DATA[b.n].current.temperature_2m-DATA[a.n].current.temperature_2m;
+  }).forEach(function(x){
+    var t=DATA[x.n].current.temperature_2m;
+    var r=el("div","row"+(x.n===sel?" on":""));
+    r.appendChild(el("div","",x.n));
+    var tr=el("div","track"),b=el("div","bar");
+    b.style.width=Math.max(2,Math.min(100,(t/45)*100))+"%";
+    tr.appendChild(b);r.appendChild(tr);
+    r.appendChild(el("div","v",fmt(t)));
+    sc.appendChild(r);
+  });
+  d.appendChild(sc);
+  renderHist();
+}
+
+function renderHist(){
+  var box=document.getElementById("hist");if(!box)return;
+  box.textContent="";
+  var h=HIST[sel];
+  if(!h){
+    box.appendChild(el("div","sub",HISTERR[sel]?"Could not load the last 30 days of data.":"Loading the last 30 days..."));
+    return;
+  }
+  var mx=[],mn=[],tm=[],rn=[];
+  h.time.forEach(function(ds,i){
+    if(h.temperature_2m_max[i]!==null&&h.temperature_2m_min[i]!==null){
+      tm.push(ds);mx.push(h.temperature_2m_max[i]);mn.push(h.temperature_2m_min[i]);
+    }
+    rn.push(h.precipitation_sum[i]||0);
+  });
+  if(!tm.length){box.appendChild(el("div","sub","Historical data is not available for this city yet."));return}
+  var avgMax=sum(mx)/mx.length;
+  var hotI=mx.indexOf(Math.max.apply(null,mx));
+  var coldI=mn.indexOf(Math.min.apply(null,mn));
+  var st=el("div","hstats");
+  [["Average daily high",fmt(avgMax)],
+   ["Hottest day",fmt(mx[hotI])+" ("+shortDate(tm[hotI])+")"],
+   ["Coldest night",fmt(mn[coldI])+" ("+shortDate(tm[coldI])+")"],
+   ["Total rainfall",sum(rn).toFixed(1)+" mm"]].forEach(function(p){
+    var x=el("div","");x.appendChild(document.createTextNode(p[0]));x.appendChild(el("b","",p[1]));st.appendChild(x)});
+  box.appendChild(st);
+
+  var W=600,H=200,L=40,R=10,T=14,B=26;
+  var lo=Math.floor(Math.min.apply(null,mn)-1),hi=Math.ceil(Math.max.apply(null,mx)+1);
+  if(hi===lo)hi=lo+1;
+  function X(i){return L+(tm.length===1?0:i*(W-L-R)/(tm.length-1))}
+  function Y(v){return T+(hi-v)*(H-T-B)/(hi-lo)}
+  var svg=svgEl("svg",{viewBox:"0 0 "+W+" "+H,"class":"chart",role:"img","aria-label":"Temperature over the last 30 days"});
+  [lo,(lo+hi)/2,hi].forEach(function(v){
+    svg.appendChild(svgEl("line",{x1:L,x2:W-R,y1:Y(v),y2:Y(v),stroke:"var(--line)","stroke-width":1}));
+    var t=svgEl("text",{x:L-6,y:Y(v)+4,"text-anchor":"end","font-size":11,fill:"var(--muted)"});
+    t.textContent=fmt(v);svg.appendChild(t);
+  });
+  function path(arr,color){
+    var dstr=arr.map(function(v,i){return (i?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)}).join(" ");
+    svg.appendChild(svgEl("path",{d:dstr,fill:"none",stroke:color,"stroke-width":2,"stroke-linejoin":"round"}));
+  }
+  path(mx,"var(--warm)");path(mn,"var(--cool)");
+  var t1=svgEl("text",{x:L,y:H-6,"font-size":11,fill:"var(--muted)"});t1.textContent=shortDate(tm[0]);svg.appendChild(t1);
+  var t2=svgEl("text",{x:W-R,y:H-6,"text-anchor":"end","font-size":11,fill:"var(--muted)"});t2.textContent=shortDate(tm[tm.length-1]);svg.appendChild(t2);
+  box.appendChild(svg);
+  box.appendChild(el("div","sub","Orange line: daily high. Blue line: daily low."));
+}
+
+function render(){
+  document.getElementById("uC").setAttribute("aria-pressed",String(unit==="C"));
+  document.getElementById("uF").setAttribute("aria-pressed",String(unit==="F"));
+  renderList();renderDetail();
+}
+document.getElementById("uC").onclick=function(){unit="C";render()};
+document.getElementById("uF").onclick=function(){unit="F";render()};
+document.getElementById("refresh").onclick=function(){HIST={};HISTERR={};load()};
+try{
+  document.getElementById("date").textContent=new Date().toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric",timeZone:"Asia/Karachi"});
+}catch(e){}
+load();
+</script>
+</body>
+</html>
